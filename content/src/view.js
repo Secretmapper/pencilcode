@@ -138,6 +138,7 @@ window.pencilcode.view = {
   isPaneEditorDirty: isPaneEditorDirty,
   setPaneLinkText: setPaneLinkText,
   setPaneRunHtml: setPaneRunHtml,
+  getPaneRunHtml: getPaneRunHtml,
   evalInRunningPane: evalInRunningPane,
   showProtractor: showProtractor,
   hideProtractor: hideProtractor,
@@ -166,6 +167,8 @@ window.pencilcode.view = {
   flashButton: flashButton,
   // Show login (or create account) dialog.
   showLoginDialog: showLoginDialog,
+  // Show preview dialog
+  showPreviewDialog: showPreviewDialog,
   // Show share dialog.
   showShareDialog: showShareDialog,
   showDialog: showDialog,
@@ -1051,6 +1054,56 @@ function showLoginDialog(opts) {
 }
 
 ///////////////////////////////////////////////////////////////////////////
+// PREVIEW (Canvas Image) Dialog
+///////////////////////////////////////////////////////////////////////////
+
+function showPreviewDialog(opts, image) {
+  if (!opts)
+    opts = { };
+  var imageObj = new Image();
+  imageObj.src = image;
+  var ratio = 180/imageObj.height;
+
+  opts.content =
+    '<div class="content">' +
+    '<div style="height:180px;">' + 
+      '<div style="height:' + (imageObj.height-50)*ratio + 'px;overflow:hidden">'
+      + '<image src=' + image + ' style="height:180px;"></image>' +
+      '</div>' +
+    '</div>' +
+    '</div><br>' +
+    '<button class="ok">OK</button>' +
+    '<button class="cancel">Cancel</button>';
+  opts.init = function(dialog) {
+    // This timeout is added so that in the #new case where
+    // the dialog and ACE editor are competing for focus, the
+    // dialog wins.
+    dialog.find('input:not([disabled])').eq(0).select().focus();
+    setTimeout(function() {
+      dialog.find('input:not([disabled])').eq(0).select().focus();
+    }, 0);
+  }
+  opts.onkeydown = function(e, dialog, state) {
+    if (e.which == 13) {
+      if (dialog.find('.username').is(':focus')) {
+        dialog.find('.password,.rename').eq(0).focus();
+      } else if (!dialog.find('button.ok').is(':disabled') && opts.done) {
+        opts.done(state);
+      }
+    }
+  }
+  opts.onclick = function(e, dialog, state) {
+  
+  }
+  opts.retrieveState = function(dialog) {
+    return {
+    };
+  }
+
+  showDialog(opts);
+}
+
+///////////////////////////////////////////////////////////////////////////
 // PANE MANAGEMENT
 ///////////////////////////////////////////////////////////////////////////
 
@@ -1101,6 +1154,10 @@ function rotateRight() {
   $(panelParts(idr)).removeClass('right').addClass('back');
   $(panelParts(idl)).removeClass('left').addClass('right');
   setPrimaryFocus();
+}
+
+function getPaneRunHtml(pane) {
+  return $('#' + pane + ' iframe');
 }
 
 ///////////////////////////////////////////////////////////////////////////

@@ -523,7 +523,7 @@ view.on('login', function() {
         saveLoginCookie();
         if (!specialowner()) {
           cookie('recent', window.location.href,
-              { expires: 7, path: '/', domain: window.pencilcode.domain });
+            { expires: 7, path: '/', domain: window.pencilcode.domain });
         }
         updateTopControls();
         view.flashNotification('Logged in as ' + model.username + '.');
@@ -549,25 +549,25 @@ view.on('setpass', function() {
       var newpasskey = keyFromPassword(model.ownername, state.newpass);
       state.update({info: 'Changing password...', disable: true});
       storage.setPassKey(model.ownername, newpasskey, oldpasskey,
-      function(m) {
-        if (m.needauth) {
-          state.update({info: 'Wrong password.', disable: false});
-          return;
-        } else if (m.error) {
-          state.update({info: 'Could not change password.', disable: false});
-          return;
-        }
-        state.update({cancel: true});
-        model.username = model.ownername;
-        model.passkey = newpasskey;
-        saveLoginCookie();
-        if (!specialowner()) {
-          cookie('recent', window.location.href,
+        function(m) {
+          if (m.needauth) {
+            state.update({info: 'Wrong password.', disable: false});
+            return;
+          } else if (m.error) {
+            state.update({info: 'Could not change password.', disable: false});
+            return;
+          }
+          state.update({cancel: true});
+          model.username = model.ownername;
+          model.passkey = newpasskey;
+          saveLoginCookie();
+          if (!specialowner()) {
+            cookie('recent', window.location.href,
               { expires: 7, path: '/', domain: window.pencilcode.domain });
-        }
-        updateTopControls();
-        view.flashNotification('Changed password for ' + model.username + '.');
-      });
+          }
+          updateTopControls();
+          view.flashNotification('Changed password for ' + model.username + '.');
+        });
     }
   });
 });
@@ -580,8 +580,8 @@ view.on('overwrite', function() { saveAction(true, null, null); });
 view.on('guide', function() {
   if (!model.guideUrl) {
     window.open(
-       '//guide.' + window.pencilcode.domain + '/home/');
-    return;
+      '//guide.' + window.pencilcode.domain + '/home/');
+return;
   }
   guide.show(!guide.isVisible());
 });
@@ -606,7 +606,7 @@ guide.on('login', function(options) {
   if (!options) {
     options = {
       oldonly: true,
-      center: true
+  center: true
     };
   }
   signUpAndSave(options);
@@ -620,100 +620,100 @@ var currentGuideSessionSaveTime = 0;
 
 guide.on('session', function session(options) {
   var url = options.url,
-      match = !url ? null :
-        /^(?:(?:\w+:)?\/\/(\w+)\.\w+[^\/]{8})?(?:\/\w+\/([^#?]*))?$/.exec(url);
-      ownername = match && match[1] || '',
-      filename = match && match[2] || options.filename || 'untitled';
-  if (options.remove || options.reset) {
-    localStorage.removeItem('pcgs:' + url);
-    if (options.remove) return;
-  }
-  currentGuideSessionUrl = url;
-  currentGuideSessionFilename = filename;
-  // Set up palette if requested.
-  if (options.palette || options.modeOptions) {
-    view.setPaneEditorBlockOptions(paneatpos('left'),
-         options.palette, options.modeOptions);
-  }
-  // Look for session from localStorage
-  var saved = localStorage.getItem('pcgs:' + url);
-  if (saved) {
-    try { saved = JSON.parse(saved); } catch (e) { saved = null; }
-  }
-  if (options && options.age && saved && (!saved.mtime ||
+  match = !url ? null :
+  /^(?:(?:\w+:)?\/\/(\w+)\.\w+[^\/]{8})?(?:\/\w+\/([^#?]*))?$/.exec(url);
+ownername = match && match[1] || '',
+  filename = match && match[2] || options.filename || 'untitled';
+if (options.remove || options.reset) {
+  localStorage.removeItem('pcgs:' + url);
+  if (options.remove) return;
+}
+currentGuideSessionUrl = url;
+currentGuideSessionFilename = filename;
+// Set up palette if requested.
+if (options.palette || options.modeOptions) {
+  view.setPaneEditorBlockOptions(paneatpos('left'),
+    options.palette, options.modeOptions);
+}
+// Look for session from localStorage
+var saved = localStorage.getItem('pcgs:' + url);
+if (saved) {
+  try { saved = JSON.parse(saved); } catch (e) { saved = null; }
+}
+if (options && options.age && saved && (!saved.mtime ||
       saved.mtime < (new Date).getTime() - options.age)) {
-    saved = null;
+        saved = null;
+      }
+// Do nothing if we are already at the right filename (any user).
+if (!saved && !options.reset) {
+  var cm = model.pane[paneatpos('left')];
+  if (filename == cm.filename && cm.data && cm.data.data) {
+    return;
   }
-  // Do nothing if we are already at the right filename (any user).
-  if (!saved && !options.reset) {
-    var cm = model.pane[paneatpos('left')];
-    if (filename == cm.filename && cm.data && cm.data.data) {
+}
+var doc = $.extend({}, options);
+if (saved) {
+  $.extend(doc, saved);
+}
+// If we have data, load it right away; otherwise load it from the url.
+if (doc.data != null) {
+  setupEditor();
+} else {
+  storage.loadFile(ownername, filename, true, function(loptions) {
+    if (loptions.error) {
+      view.flashNotification(loptions.error);
       return;
     }
-  }
-  var doc = $.extend({}, options);
-  if (saved) {
-    $.extend(doc, saved);
-  }
-  // If we have data, load it right away; otherwise load it from the url.
-  if (doc.data != null) {
+    doc = $.extend(loptions, options);
     setupEditor();
-  } else {
-    storage.loadFile(ownername, filename, true, function(loptions) {
-      if (loptions.error) {
-        view.flashNotification(loptions.error);
-        return;
-      }
-      doc = $.extend(loptions, options);
-      setupEditor();
-    });
-  }
-  function setupEditor() {
-    var pane = paneatpos('left');
-    var mpp = model.pane[pane];
-    if (!doc.file) { doc.file = 'setdoc'; }
-    mpp.isdir = false;
-    mpp.data = doc;
-    var mode = doc.hasOwnProperty('blocks') ?
-        !falsish(doc.blocks) : loadBlockMode();
-    mpp.filename = filename;
-    mpp.isdir = false;
-    mpp.bydate = false;
-    mpp.loading = nextLoadNumber();
-    mpp.running = false;
-    view.setPaneEditorData(pane, doc, filename, mode);
-    updateTopControls();
-  }
+  });
+}
+function setupEditor() {
+  var pane = paneatpos('left');
+  var mpp = model.pane[pane];
+  if (!doc.file) { doc.file = 'setdoc'; }
+  mpp.isdir = false;
+  mpp.data = doc;
+  var mode = doc.hasOwnProperty('blocks') ?
+    !falsish(doc.blocks) : loadBlockMode();
+  mpp.filename = filename;
+  mpp.isdir = false;
+  mpp.bydate = false;
+  mpp.loading = nextLoadNumber();
+  mpp.running = false;
+  view.setPaneEditorData(pane, doc, filename, mode);
+  updateTopControls();
+}
 });
 
 view.on('delta', function(pane) {
   // Listen to deltas if there is a guide session active.
   if (!currentGuideSessionUrl || !currentGuideSessionFilename ||
-      currentGuideSessionTimer || posofpane(pane) != 'left' ||
-      model.pane[pane].filename != currentGuideSessionFilename) {
-    return;
-  }
+    currentGuideSessionTimer || posofpane(pane) != 'left' ||
+    model.pane[pane].filename != currentGuideSessionFilename) {
+      return;
+    }
   // Save after every change, polling at most twice per second.
   var delay =
-    Math.max(0, currentGuideSessionSaveTime + 500 - (new Date).getTime());
-  currentGuideSessionTimer = setTimeout(function() {
-    currentGuideSessionTimer = null;
-    var doc = view.getPaneEditorData(pane);
-    doc.mtime = currentGuideSessionSaveTime = +(new Date);
-    if (doc && doc.data != null) {
-      localStorage.setItem(
-          'pcgs:' + currentGuideSessionUrl, JSON.stringify(doc));
-    }
-  }, delay);
+  Math.max(0, currentGuideSessionSaveTime + 500 - (new Date).getTime());
+currentGuideSessionTimer = setTimeout(function() {
+  currentGuideSessionTimer = null;
+  var doc = view.getPaneEditorData(pane);
+  doc.mtime = currentGuideSessionSaveTime = +(new Date);
+  if (doc && doc.data != null) {
+    localStorage.setItem(
+      'pcgs:' + currentGuideSessionUrl, JSON.stringify(doc));
+  }
+}, delay);
 });
 
 view.on('toggleblocks', function(p, useblocks) {
   saveBlockMode(useblocks);
   var filename = model.pane[p].filename;
   var doc = view.getPaneEditorData(p),
-      code = (doc && doc.data) || model.pane[p].data.data;
-  logCodeEvent('toggle', filename, code, useblocks,
-      view.getPaneEditorLanguage(p));
+  code = (doc && doc.data) || model.pane[p].data.data;
+logCodeEvent('toggle', filename, code, useblocks,
+  view.getPaneEditorLanguage(p));
 });
 
 function saveAction(forceOverwrite, loginPrompt, doneCallback) {
@@ -757,29 +757,41 @@ function saveAction(forceOverwrite, loginPrompt, doneCallback) {
     // If we know auth is required and the user isn't logged in,
     // prompt for a login.
     logInAndSave(filename, newdata, forceOverwrite,
-                 noteclean, loginPrompt, doneCallback);
+        noteclean, loginPrompt, doneCallback);
     return;
   }
   // Attempt to save.
+  var canvas_pane = view.getPaneRunHtml(paneatpos('right'));
+  var canvasDataURL = canvas_pane.contents().find('canvas')[0].toDataURL('image/png');
+  var page = canvas_pane.contents().find('body');
+    window.a = page;
+  $($(page).find('#_testpanel')).css('color:red');
+  html2canvas(page, { 
+    onrendered: function(canvas) { 
+        canvasDataURL = canvas.toDataURL('image/png');
+        view.showPreviewDialog(null, canvasDataURL);
+    },
+  });
+
   view.flashNotification('', true);
   storage.saveFile(
       model.ownername, filename, newdata, forceOverwrite, model.passkey, false,
-  function(status) {
-    if (status.needauth) {
-      logInAndSave(filename, newdata, forceOverwrite, noteclean,
-                   loginPrompt, doneCallback);
-    } else {
-      if (!model.username) {
-        // If not yet logged in but we have saved (e.g., no password needed),
-        // then log us in.
-        model.username = model.ownername;
-      }
-      handleSaveStatus(status, filename, noteclean);
-      if (doneCallback) {
-        doneCallback();
-      }
-    }
-  });
+      function(status) {
+        if (status.needauth) {
+          logInAndSave(filename, newdata, forceOverwrite, noteclean,
+            loginPrompt, doneCallback);
+        } else {
+          if (!model.username) {
+            // If not yet logged in but we have saved (e.g., no password needed),
+            // then log us in.
+            model.username = model.ownername;
+          }
+          handleSaveStatus(status, filename, noteclean);
+          if (doneCallback) {
+            doneCallback();
+          }
+        }
+      });
 }
 
 function keyFromPassword(username, p) {
@@ -841,18 +853,18 @@ function signUpAndSave(options) {
           if (userList[j].reserved) {
             return {
               disable: true,
-              info: 'Name "' + username + '" reserved.'
+    info: 'Name "' + username + '" reserved.'
             };
           } else if (options.newonly) {
             return {
               disable: true,
-              info: 'Name "' + username + '" already used.'
+    info: 'Name "' + username + '" already used.'
             };
           } else {
             shouldCreateAccount = false;
             return {
               disable: false,
-              info: 'Will log in as "' + username + '" and save.'
+                info: 'Will log in as "' + username + '" and save.'
             };
           }
         }
